@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block title %}Panel de Administración{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Panel de Administración</h2>
+    <section class="mt-4">
+        <h3>Publicaciones</h3>
+        {% if posts %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Título</th>
+                    <th>Imagen</th>
+                    <th>Categorías</th>
+                    <th>Autor</th>
+                    <th>Fecha</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for post in posts %}
+                <tr>
+                    <td>{{ post.id }}</td>
+                    <td>{{ post.title }}</td>
+                    <td>
+                        {% if post.image_filename %}
+                        <img src="{{ url_for('static', filename='uploads/' ~ post.image_filename) }}" alt="Miniatura de {{ post.title }}" class="table-thumb">
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if post.categories %}
+                            {% for category in post.categories %}
+                            <span class="pill pill-muted">{{ category.name }}</span>
+                            {% endfor %}
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ post.author.username if post.author else 'Desconocido' }}</td>
+                    <td>
+                        <time class="timestamp" datetime="{{ post.date_posted.isoformat() }}Z" data-timestamp="{{ post.date_posted.isoformat() }}Z">
+                            {{ post.date_posted.strftime('%d/%m/%Y %H:%M') }}
+                        </time>
+                    </td>
+                    <td>
+                        <form method="POST" action="{{ url_for('admin_delete_post', post_id=post.id) }}">
+                            <input type="hidden" name="next" value="{{ url_for('admin_panel') }}">
+                            <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="text-muted">No hay publicaciones.</p>
+        {% endif %}
+    </section>
+
+    <section class="mt-4">
+        <h3>Usuarios</h3>
+        {% if users %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Avatar</th>
+                    <th>Usuario</th>
+                    <th>Email</th>
+                    <th>Rol</th>
+                    <th>Estado</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>
+                        <div class="avatar avatar-sm">
+                            {% if user.profile_image %}
+                            <img src="{{ url_for('static', filename='uploads/profiles/' ~ user.profile_image) }}" alt="Avatar de {{ user.username }}">
+                            {% else %}
+                            <span>{{ user.username[:1].upper() }}</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ 'Admin' if user.is_admin else 'Usuario' }}</td>
+                    <td>{{ 'Baneado' if user.is_banned else 'Activo' }}</td>
+                    <td>
+                        {% if user.id != current_user.id %}
+                        <form method="POST" action="{{ url_for('admin_toggle_ban', user_id=user.id) }}">
+                            <button type="submit" class="btn btn-sm {{ 'btn-success' if user.is_banned else 'btn-warning' }}">
+                                {{ 'Desbanear' if user.is_banned else 'Banear' }}
+                            </button>
+                        </form>
+                        {% else %}
+                        <span class="text-muted">No disponible</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="text-muted">No hay usuarios registrados.</p>
+        {% endif %}
+    </section>
+
+    <section class="mt-4">
+        <h3>Logs recientes</h3>
+        {% if logs %}
+        <ul class="list-group">
+            {% for log in logs %}
+            <li class="list-group-item">
+                <strong>
+                    <time class="timestamp" datetime="{{ log.timestamp.isoformat() }}Z" data-timestamp="{{ log.timestamp.isoformat() }}Z">
+                        {{ log.timestamp.strftime('%d/%m/%Y %H:%M') }}
+                    </time>
+                </strong>
+                — {{ log.details or log.action }}
+                {% if log.performed_by %}
+                <small class="text-muted">por {{ log.performed_by.username }}</small>
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-muted">No hay acciones registradas.</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

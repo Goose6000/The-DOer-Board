@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Registro{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Registro</h1>
+    <form method="POST">
+        <label>Usuario:
+            <input type="text" name="username" required>
+        </label><br>
+        <label>Correo Electrónico:
+            <input type="email" name="email" required>
+        </label><br>
+        <label>Contraseña:
+            <input type="password" name="password" required>
+        </label><br>
+        <button type="submit">Registrarse</button>
+        <p class="mt-2">¿Ya tienes una cuenta? <a href="{{ url_for('login') }}">Inicia sesión aquí</a>.</p>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Crear Publicación - Anuncios Key{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Crear Nueva Publicación</h2>
+    <form method="POST" action="{{ url_for('create_post') }}" enctype="multipart/form-data">
+        <div class="form-group">
+            <label class="form-label" for="title">Título</label>
+            <input class="form-control" type="text" id="title" name="title" required>
+        </div>
+        <div class="form-group">
+            <label class="form-label" for="content">Contenido</label>
+            <textarea class="form-control" id="content" name="content" rows="5" required></textarea>
+        </div>
+        <div class="form-group">
+            <label class="form-label" for="categories">Categorías</label>
+            <input class="form-control" type="text" id="categories" name="categories" placeholder="Ej: Ventas, Tecnología">
+            {% if categories %}
+            <small class="text-muted">Actuales: {{ categories|map(attribute='name')|join(', ') }}</small>
+            {% else %}
+            <small class="text-muted">Escribe nombres separados por comas. Se crearán automáticamente.</small>
+            {% endif %}
+        </div>
+        <div class="form-group">
+            <label class="form-label" for="image">Imagen de Fondo (opcional)</label>
+            <input class="form-control" type="file" id="image" name="image" accept="image/*">
+            <small class="text-muted">Formatos permitidos: PNG, JPG, JPEG, GIF o WEBP. Máx. 5&nbsp;MB.</small>
+        </div>
+        <button type="submit" class="btn btn-primary mt-2">Publicar</button>
+    </form>
+</div>
+{% endblock %}

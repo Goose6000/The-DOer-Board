@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}{{ post.title }} - Anuncios Key{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <a href="{{ url_for('index') }}" class="btn btn-link mb-3">&larr; Volver a los anuncios</a>
+    <div class="card mb-4">
+        {% if post.image_filename %}
+        <div class="post-cover">
+            <img src="{{ url_for('static', filename='uploads/' ~ post.image_filename) }}"
+                alt="Imagen de {{ post.title }}">
+        </div>
+        {% endif %}
+        <div class="card-body">
+            <h2 class="card-title">{{ post.title }}</h2>
+            <div class="author-meta mt-2">
+                <div class="avatar avatar-md">
+                    {% if post.author and post.author.profile_image %}
+                    <img src="{{ url_for('static', filename='uploads/profiles/' ~ post.author.profile_image) }}"
+                        alt="Avatar de {{ post.author.username }}">
+                    {% else %}
+                    <span>{{ (post.author.username[:1] if post.author and post.author.username else 'A')|upper }}</span>
+                    {% endif %}
+                </div>
+                <div>
+                    <p class="mb-0"><strong>{{ post.author.username if post.author else 'Desconocido' }}</strong></p>
+                    <small class="text-muted">
+                        Publicado el <time class="timestamp" datetime="{{ post.date_posted.isoformat() }}Z"
+                            data-timestamp="{{ post.date_posted.isoformat() }}Z">{{ post.date_posted.strftime('%d/%m/%Y
+                            %H:%M') }}</time>
+                    </small>
+                </div>
+            </div>
+            {% if post.categories %}
+            <div class="post-category-list mt-3">
+                {% for category in post.categories %}
+                <span class="pill pill-muted">{{ category.name }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+            <p class="card-text post-content-text">{{ post.content }}</p>
+            <div class="d-flex align-items-center gap-3 flex-wrap mt-3 vote-bar">
+                <div class="text-muted d-flex align-items-center vote-summary">
+                    <strong class="mb-0">{{ post.upvotes }}</strong>
+                    <span>voto{% if post.upvotes != 1 %}s{% endif %}</span>
+                </div>
+                {% if current_user.is_authenticated %}
+                <form method="POST" action="{{ url_for('toggle_upvote', post_id=post.id) }}" class="mb-0 vote-action">
+                    <input type="hidden" name="next" value="{{ request.full_path or request.path }}">
+                    <button type="submit" class="btn btn-sm {% if user_has_liked %}btn-success{% else %}btn-outline-primary{% endif %}">
+                        {% if user_has_liked %}
+                        Quitar voto
+                        {% else %}
+                        Votar
+                        {% endif %}
+                    </button>
+                </form>
+                {% else %}
+                <a class="btn btn-sm btn-outline-secondary vote-action" href="{{ url_for('login') }}">Inicia sesión para votar</a>
+                {% endif %}
+            </div>
+            {% if current_user.is_authenticated and current_user.is_admin %}
+            <form method="POST" action="{{ url_for('admin_delete_post', post_id=post.id) }}">
+                <input type="hidden" name="next" value="{{ url_for('index') }}">
+                <button type="submit" class="btn btn-danger">Eliminar publicación</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+    <h4>Comentarios</h4>
+    {% if current_user.is_authenticated %}
+    <form method="POST" action="{{ url_for('add_comment', post_id=post.id) }}" class="mt-3">
+        <div class="mb-3">
+            <label for="comment-content" class="form-label">Añadir comentario</label>
+            <textarea class="form-control" id="comment-content" name="content" rows="3" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Comentar</button>
+    </form>
+    {% else %}
+    <p class="text-muted mt-3">Inicia sesión para comentar.</p>
+    {% endif %}
+    {% if post.comments %}
+    <ul class="list-group mb-3">
+        {% for comment in post.comments %}
+        <li class="list-group-item">
+            <div class="comment-header">
+                <div class="avatar avatar-sm">
+                    {% if comment.author and comment.author.profile_image %}
+                    <img src="{{ url_for('static', filename='uploads/profiles/' ~ comment.author.profile_image) }}"
+                        alt="Avatar de {{ comment.author.username }}">
+                    {% else %}
+                    <span>
+                        {% if comment.author %}
+                        {{ comment.author.username[:1].upper() }}
+                        {% else %}
+                        A
+                        {% endif %}
+                    </span>
+                    {% endif %}
+                </div>
+                <div>
+                    <strong>
+                        {% if comment.author %}
+                        {{ comment.author.username }}
+                        {% else %}
+                        Anónimo
+                        {% endif %}
+                    </strong>
+                    <small class="text-muted">
+                        · <time class="timestamp" datetime="{{ comment.date_posted.isoformat() }}Z"
+                            data-timestamp="{{ comment.date_posted.isoformat() }}Z">{{
+                            comment.date_posted.strftime('%d/%m/%Y %H:%M') }}</time>
+                    </small>
+                </div>
+            </div>
+            <div class="comment-body">{{ comment.content }}</div>
+            {% if current_user.is_authenticated and (current_user.is_admin or (comment.author and comment.author.id ==
+            current_user.id)) %}
+            <form method="POST" action="{{ url_for('delete_comment', comment_id=comment.id) }}"
+                class="form-inline mt-2">
+                <input type="hidden" name="next" value="{{ url_for('post_detail', post_id=post.id) }}">
+                <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
+            </form>
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-muted">Todavía no hay comentarios.</p>
+    {% endif %}
+</div>
+{% endblock %}

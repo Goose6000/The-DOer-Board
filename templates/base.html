@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>{% block title %}Anuncios Key{% endblock %}</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+
+    {% block head %}{% endblock %}
+</head>
+<body>
+    {% block navbar %}
+    <nav class="navbar">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <h1>
+                    The Doer Board
+                </h1>
+            </a>
+            <div>
+                {% if current_user.is_authenticated %}
+                    <a class="nav-link" href="{{ url_for('create_post') }}">Crear Publicación</a>
+                    {% if current_user.is_admin %}
+                    <a class="nav-link" href="{{ url_for('admin_panel') }}">Panel Admin</a>
+                    {% endif %}
+                    <a class="nav-link" href="{{ url_for('account') }}">Cuenta</a>
+                    <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+                {% else %}
+                    <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+    {% endblock %}
+
+    <div class="container mt-3">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            <div class="alert alert-info">
+                <ul class="mb-0">
+                    {% for message in messages %}
+                    <li>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    {% block content %}{% endblock %}
+
+    <script src="{{ url_for('static', filename='js/timezones.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block title %}Anuncios Key{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="mb-4">
+        <h2 class="mb-1">
+            {% if search_query %}
+                Resultados de búsqueda
+            {% else %}
+                Anuncios recientes
+            {% endif %}
+        </h2>
+        {% if search_query %}
+        <p class="text-muted mb-0">Mostrando coincidencias para “{{ search_query }}”.</p>
+        {% endif %}
+        {% if selected_category %}
+        <p class="text-muted mb-0">Filtrando por categoría "{{ selected_category.name }}".</p>
+        {% endif %}
+        <form class="search-bar mt-3" method="get" action="{{ url_for('index') }}">
+            <input type="text" name="q" placeholder="Buscar anuncios..." value="{{ search_query }}" aria-label="Buscar anuncios">
+            {% if selected_category %}
+            <input type="hidden" name="category" value="{{ selected_category.slug }}">
+            {% endif %}
+            {% if sort_option %}
+            <input type="hidden" name="sort" value="{{ sort_option }}">
+            {% endif %}
+            {% if search_query %}
+            <a class="btn btn-link" href="{{ url_for('index', sort=sort_option) }}">Limpiar</a>
+            {% endif %}
+            <button type="submit" class="btn btn-primary">Buscar</button>
+        </form>
+    </div>
+    <div class="sort-bar mb-4">
+        <span class="text-muted me-2">Ordenar por:</span>
+        <div class="btn-group">
+            <a class="btn btn-sm {% if sort_option != 'new' %}btn-primary{% else %}btn-outline-primary{% endif %}"
+               href="{{ url_for('index', sort='popular', q=search_query or None, category=selected_category.slug if selected_category else None) }}">
+                Más votados
+            </a>
+            <a class="btn btn-sm {% if sort_option == 'new' %}btn-primary{% else %}btn-outline-primary{% endif %}"
+               href="{{ url_for('index', sort='new', q=search_query or None, category=selected_category.slug if selected_category else None) }}">
+                Más recientes
+            </a>
+        </div>
+    </div>
+    {% if categories %}
+    <div class="category-filter mb-4" id="categorias">
+        <span class="text-muted d-block mb-2">Categorías</span>
+        <div class="pill-group">
+            {% for category in categories %}
+            <a class="pill {% if selected_category and selected_category.id == category.id %}pill-active{% endif %}"
+               href="{{ url_for('index', category=category.slug, q=search_query or None, sort=sort_option) }}">
+                {{ category.name }}
+            </a>
+            {% endfor %}
+            {% if selected_category %}
+            <a class="pill pill-muted" href="{{ url_for('index', q=search_query or None, sort=sort_option) }}">Ver todas</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if posts %}
+        <div class="row">
+            {% for post in posts %}
+                <div class="col-md-4 mb-3">
+                    <div class="card h-100 shadow-sm">
+                        <a href="{{ url_for('post_detail', post_id=post.id) }}" class="text-decoration-none text-dark">
+                            {% if post.image_filename %}
+                            <div class="card-media">
+                                <img src="{{ url_for('static', filename='uploads/' ~ post.image_filename) }}" alt="Imagen de {{ post.title }}">
+                            </div>
+                            {% endif %}
+                            <div class="card-body">
+                                <h5 class="card-title mb-1">{{ post.title }}</h5>
+                                <div class="card-meta mt-2">
+                                    <div class="avatar avatar-sm">
+                                        {% if post.author and post.author.profile_image %}
+                                        <img src="{{ url_for('static', filename='uploads/profiles/' ~ post.author.profile_image) }}" alt="Avatar de {{ post.author.username }}">
+                                        {% else %}
+                                        <span>{{ (post.author.username[:1] if post.author and post.author.username else 'A')|upper }}</span>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <small class="text-muted d-block">
+                                            {{ post.author.username if post.author else 'Desconocido' }}
+                                        </small>
+                                        <small class="text-muted">
+                                            <time class="timestamp" datetime="{{ post.date_posted.isoformat() }}Z" data-timestamp="{{ post.date_posted.isoformat() }}Z">{{ post.date_posted.strftime('%d/%m/%Y %H:%M') }}</time>
+                                        </small>
+                                    </div>
+                                </div>
+                                {% if post.categories %}
+                                <div class="post-card-categories mt-3">
+                                    {% for category in post.categories %}
+                                    <span class="pill pill-muted">{{ category.name }}</span>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </a>
+                        <div class="card-footer d-flex justify-content-between align-items-center gap-3 flex-wrap">
+                            <div class="text-muted small d-flex align-items-center vote-summary">
+                                <strong class="mb-0">{{ post.upvotes }}</strong>
+                                <span>voto{% if post.upvotes != 1 %}s{% endif %}</span>
+                            </div>
+                            {% if current_user.is_authenticated %}
+                            <form method="POST" action="{{ url_for('toggle_upvote', post_id=post.id) }}" class="mb-0 vote-action">
+                                <input type="hidden" name="next" value="{{ request.full_path or request.path }}">
+                                <button type="submit" class="btn btn-sm {% if post.id in liked_post_ids %}btn-success{% else %}btn-outline-primary{% endif %}">
+                                    {% if post.id in liked_post_ids %}
+                                        Quitar voto
+                                    {% else %}
+                                        Votar
+                                    {% endif %}
+                                </button>
+                            </form>
+                            {% else %}
+                            <a class="btn btn-sm btn-outline-secondary vote-action" href="{{ url_for('login') }}">Inicia sesión</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>
+            {% if selected_category %}
+                No hay publicaciones en esta categoría todavía.
+            {% elif search_query %}
+                No se encontraron publicaciones que coincidan con tu búsqueda.
+            {% else %}
+                No hay publicaciones todavía.
+            {% endif %}
+        </p>
+    {% endif %}
+</div>
+{% endblock %}
